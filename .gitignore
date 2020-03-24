@@ -1,1 +1,5 @@
-data/**
+**.pyc
+dataset/**
+trained_models/**
+runs/**
+pkl/**
