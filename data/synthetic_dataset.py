@@ -21,10 +21,10 @@ class SyntheticDataset(Dataset):
 
         if self.split == "train":
             with open('pkl/synthetic_train.pkl', 'rb') as f:
-                self.data = pickle.load(f)
+                self.data = pickle.load(f, encoding='latin1')
         elif self.split == "validate":
             with open('pkl/synthetic_validate.pkl', 'rb') as f:
-                self.data = pickle.load(f)
+                self.data = pickle.load(f, encoding='latin1')
         else:
             raise ValueError("split could only be train or test")
 
@@ -88,21 +88,19 @@ class SyntheticDataset(Dataset):
         camera_K[0, :] = camera_K[0, :] * scale_x
         camera_K[1, :] = camera_K[1, :] * scale_y
         camera_K_inv = inv(camera_K)
+        # if self.use_augment:
+        #     #add the image together so that it can be augmented together,
+        #     #otherwisw some channel maybe inconsistently augmented
+        #     togetherImage = np.append(left_image, right_image, axis=0)
+        #     auged_together = self.img_aug.augment_image(togetherImage)
+        #     #sperate the image
+        #     width = int(auged_together.shape[0] / 2)
+        #     left_image = auged_together[:width]
+        #     right_image = auged_together[width:]
 
         if self.use_augment:
-            #add the image together so that it can be augmented together,
-            #otherwisw some channel maybe inconsistently augmented
-            togetherImage = np.append(left_image, right_image, axis=0)
-            auged_together = self.img_aug.augment_image(togetherImage)
-            #sperate the image
-            width = int(auged_together.shape[0] / 2)
-            left_image = auged_together[:width]
-            right_image = auged_together[width:]
-
-        # left_image = (left_image - self.data['mean']
-        #               ) / self.data['std']
-        # right_image = (right_image - self.data['mean']
-        #                ) / self.data['std']
+            left_image = self.img_aug.augment_image(left_image)
+            right_image = self.img_aug.augment_image(right_image)
 
         left_image = (left_image - 81.
                       ) / 35.
@@ -158,7 +156,7 @@ if __name__ == "__main__":
     from torch.utils.data import DataLoader
 
 
-    loader = DataLoader(TUMDataset("validate"), batch_size=1, shuffle=True)
+    loader = DataLoader(SyntheticDataset("validate"), batch_size=1, shuffle=True)
     for i_batch, sample_batched in enumerate(loader):
 
         left_image = np.array(sample_batched['left_image'])
